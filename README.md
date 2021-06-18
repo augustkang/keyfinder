@@ -1,10 +1,12 @@
 # Old Access Key Pair Finder
 
-keyfinder는 AWS 계정 내 모든 IAM User들의 모든 Access Key Pair들에 대해 생성된지 N 시간 보다 오래된 Access Key Pair가 있는지 찾아보고,
+keyfinder는 오래된 Access Key Pair를 찾아 Slack webhook으로 알림을 보내주는 애플리케이션입니다.
 
-N시간 보다 오래된 Access Key Pair가 있을 경우 Slack webhook으로 해당 IAM User의 이름, 해당 Access Key ID, 해당 Access Key Pair가 생성된 날짜를
+아래와 같이 동작합니다.
 
-알림 메세지로 보내주는 애플리케이션입니다. 
+- AWS 계정 내 모든 IAM User들의 모든 Access Key Pair들 중에서
+- 생성된지 N 시간 보다 오래된 Access Key Pair가 있는지 찾는다.
+- N시간 보다 오래된 Access Key Pair가 있을 경우, Slack webhook으로 해당 IAM User의 이름, 해당 Access Key ID, 해당 Access Key Pair가 생성된 날짜를 알림 메세지로 보낸다
 
 keyfinder는 HTTP web server 기반으로 작동합니다. query string으로 hours와 url 이라는 매개변수를 받아 역할을 수행합니다.
 
@@ -26,9 +28,10 @@ Kubernetes로 배포할 경우 manifest 내에 넣어주어야 합니다.
 
 다른 채널로 override 하고 싶을 경우가 있을 수 있으므로 그럴 경우 query string parameter로 받게 하였습니다.
 
-!!주의 : channel 명이 예를 들어 #example 인 경우 example 이라고만 입력해야 해당 채널로 보냅니다.
+!!주의 : channel 명이 예를 들어 '#examplechannel' 인 경우 'examplechannel' 이라고만 입력해야 해당 채널로 보냅니다.
 
-- #examplechannel로 보내는 예시 : localhost:8080/?channel=examplechannel&url=https://dummyslackwebhook.com/asdf&hours=8
+- '#examplechannel'로 보내는 예시
+- localhost:8080/?channel=examplechannel&url=https://dummyslackwebhook.com/asdf&hours=8
 
 ## Run locally
 

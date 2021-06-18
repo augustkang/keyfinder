@@ -85,13 +85,19 @@ func (kf *KeyFinder) GetKeyList(userNames []string) (keyList []types.AccessKeyMe
 
 func (kf *KeyFinder) CheckKeyAges(allKeyList []types.AccessKeyMetadata) {
 
+	var count int
 	for _, key := range allKeyList {
 		expireTime := time.Now().UTC().Add(time.Hour * time.Duration(-kf.Hours))
 
 		// If
 		if expireTime.Sub(*key.CreateDate) > 0 {
+			count += 1
 			kf.PostSlackMessage(key)
+			fmt.Println("[RESULT] Sent Slack Message regarding IAM User using expired Access Key Pair : ", *key.UserName)
 		}
+	}
+	if count == 0 {
+		fmt.Println("[RESULT] There was no expired Access Keys.")
 	}
 }
 
