@@ -60,7 +60,6 @@ docker build -t keyfinder:latest ./
 
 # Docker run (with pulled image)
 docker run -e AWS_ACCESS_KEY_ID="YOUR-ACCESS-KEY" -e AWS_SECRET_ACCESS_KEY="YOUR-SECRET-KEY" -e AWS_REGION=ap-northeast-2 -d -p 8080:8080 --name keyfinder donghyunkang/keyfinder:latest
-
 ```
 
 ## Run on Kubernetes
@@ -76,15 +75,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: keyfinder
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: keyfinder
-  template:
-    metadata:
-      labels:
-        app: keyfinder
+  ...
+  ...
     spec:
       containers:
       - name: keyfinder
@@ -96,21 +88,40 @@ spec:
           value: "YOUR-SECRET-ACCESS-KEY" # Put AWS Secret Access Key Here
         - name: AWS_REGION
           value: "ap-northeast-2"
+...
+...
 ```
 
 ### How to deploy and expose keyfinder application as Kubernetes Service
+
+- EKS create Deployment & create Service
+
+I used `nodePort` 32000. You can edit this port number as per your requirements for sure.
+
 ```
-# create deployment
 kubectl apply -f keyfinder.yaml
+# Then send reuqest to IP:32000/?hours={hours}&url={WEBHOOK-URL}&channel={SLACK-CHANNEL-NAME} without '#' (For #mychannel channel? type mychannel only.)
+```
 
-# expose deployment as service
-kubectl expose deployment keyfinder --type=LoadBalancer --port=8080
+Let's say hours (N) is 24, webhook url is http://abcdwebhook.com/asdf.
+And slack channel is #mychannel, for example.
+Your Worker node's IP is 1.1.1.1, and nodePort set as 32000.
 
-# If using Minikube, Run below command to access service
+Then full URI (pass to keyfinder) as belows.
+
+- 1.1.1.1:32000/?hours=24&url=http://abcdwebhook.com/asdf&channel=mychannel
+
+# Minikube
+
+You may need to edit keyfinder-service.
+
+After create deployment(or pod) and create service, Run below command to access service.
+```
 minikube service keyfinder
 ```
-## Usage
+## Request to keyfinder
 
-### Browser
+nodeIP:nodePort/?url=URL&hours=N
 
-Enter localhost:portnumber/?url=https://SLACK-WEBHOOK-URL&hours=N from Browser
+add channel parameter as query string to override Slack channel.
+(Default : example)
