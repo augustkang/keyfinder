@@ -1,18 +1,35 @@
-# Old Access Key Pair Finder
+# keyfinder
 
-keyfinder는 오래된 Access Key Pair를 찾아 Slack webhook으로 알림을 보내주는 애플리케이션입니다.
+keyfinder는 AWS 계정 내 IAM User들에 대해 주어진 시간보다 오래된 Access Key Pair를 찾아 Slack webhook으로 알림을 보내주는 애플리케이션입니다.
 
 아래와 같이 동작합니다.
 
 - AWS 계정 내 모든 IAM User들의 모든 Access Key Pair들 중에서
-- 생성된지 N 시간 보다 오래된 Access Key Pair가 있는지 찾는다.
-- N시간 보다 오래된 Access Key Pair가 있을 경우, Slack webhook으로 해당 IAM User의 이름, 해당 Access Key ID, 해당 Access Key Pair가 생성된 날짜를 알림 메세지로 보낸다
+- 생성 후 N 시간 보다 오래된 Access Key Pair가 있는지 찾는다.
+- 생성된 지 N시간 보다 오래된 Access Key Pair가 있을 경우, Slack webhook으로 해당 IAM User의 이름, 해당 Access Key ID, 해당 Access Key Pair가 생성된 날짜를 알림 메세지로 보낸다
 
-keyfinder는 HTTP web server 기반으로 작동합니다. query string으로 hours와 url 이라는 매개변수를 받아 역할을 수행합니다.
+keyfinder는 HTTP web server 기반으로 작동합니다. query string으로 hours와 url 이라는 매개변수를 받아 역할을 수행합니다. **로컬에서 구동하면 8080 포트를 이용합니다.**
 
 아래 예시처럼 keyfinder에게 요청하면 생성된지 8 시간보다 오래된 Access Key Pair를 찾고 https://dummyslackwebhook.com/asdf 이라는 주소로 검출 결과를 http post 요청으로 보냅니다.
 
 - 예시 : 브라우저에서 localhost:8080/?url=https://dummyslackwebhook.com/asdf&hours=8 입력
+
+### Query string으로 제공할 수 있는 Parameter의 종류
+- url(필수) : Slack webhook URL
+- hours(필수) : 지금으로부터 몇 시간보다 오래된 Access Key Pair 들을 찾을건지
+- channel(선택) : 해당 Slack workspace의 어느 Channel로 보낼 것인지. 기본값 : #example
+- - !!주의 : channel=name 형태로 넘겨줘야 합니다. channel=#name 형식 안됨!!
+
+### 메세지를 보낼 Slack 채널 지정하는 법
+
+채널을 별도로 지정해주지 않을 경우 #example 채널에 요청을 보내게 코드에 넣어놓았습니다.(`main.go` 내 `func rootHandler`내에 정의)
+
+다른 채널로 override 하고 싶을 경우가 있을 수 있으므로 그럴 경우 query string parameter로 받게 하였습니다.
+
+!!주의 : channel 명이 예를 들어 '#examplechannel' 인 경우 'examplechannel' 이라고만 입력해야 해당 채널로 보냅니다.
+
+- '#examplechannel'로 보내는 예시
+- localhost:8080/?channel=examplechannel&url=https://dummyslackwebhook.com/asdf&hours=8
 
 ## Prerequisites
 
@@ -23,7 +40,7 @@ keyfinder가 작동하려면 IAM action들을 허용해줘야 합니다.
 - iam:ListUsers
 - iam:ListAccessKeys
 
-### 실행하려면?
+## 실행하려면?
 
 직접 실행하려면 AWS Access Key Pair를 `aws configure` 명령어로 준비해두어야 합니다.
 
@@ -32,17 +49,6 @@ keyfinder가 작동하려면 IAM action들을 허용해줘야 합니다.
 Docker로 실행할 경우 `docker run` 명령어에 `-e` 옵션을 넣고 넣어줄 수 있습니다.
 
 Kubernetes로 배포할 경우 manifest 내에 넣어주어야 합니다.
-
-### 메세지를 보낼 Slack 채널 지정하는 법
-
-별도로 지정해주지 않을 경우 #example 채널에 요청을 보내게 넣어놓았습니다.(`main.go` 내 `func rootHandler`내에 정의)
-
-다른 채널로 override 하고 싶을 경우가 있을 수 있으므로 그럴 경우 query string parameter로 받게 하였습니다.
-
-!!주의 : channel 명이 예를 들어 '#examplechannel' 인 경우 'examplechannel' 이라고만 입력해야 해당 채널로 보냅니다.
-
-- '#examplechannel'로 보내는 예시
-- localhost:8080/?channel=examplechannel&url=https://dummyslackwebhook.com/asdf&hours=8
 
 ## Run locally
 
@@ -61,15 +67,18 @@ Kubernetes로 배포할 경우 manifest 내에 넣어주어야 합니다.
 
 ## Run as Docker container
 ```bash
+# Docker run(simple)
+[august@dummy-pc ~]$ docker run -e AWS_ACCESS_KEY_ID="YOUR-ACCESS-KEY" -e AWS_SECRET_ACCESS_KEY=  "YOUR-SECRET-KEY" -e AWS_REGION=ap-northeast-2 -d -p 8080:8080 --name keyfinder donghyunkang/key  finder:latest
+```
 
-# Pull from Docker hub
-[august@dummy-pc ~]$ docker pull donghyunkang/keyfinder:latest
+To build or pull image from Docker hub,
 
+```bash
 # Build image locally
 [august@dummy-pc ~]$ docker build -t keyfinder:latest ./
 
-# Docker run (with pulled image)
-[august@dummy-pc ~]$ docker run -e AWS_ACCESS_KEY_ID="YOUR-ACCESS-KEY" -e AWS_SECRET_ACCESS_KEY="YOUR-SECRET-KEY" -e AWS_REGION=ap-northeast-2 -d -p 8080:8080 --name keyfinder donghyunkang/keyfinder:latest
+# Pull from Docker hub
+[august@dummy-pc ~]$ docker pull donghyunkang/keyfinder:latest
 ```
 
 ## Run on Kubernetes
@@ -135,7 +144,7 @@ After create deployment(or pod) and create service, Run below command to access 
 [august@dummy-pc ~]$ minikube service keyfinder
 ```
 
-## Request to keyfinder
+### Request to keyfinder
 
 nodeIP:nodePort/?url=URL&hours=N
 
