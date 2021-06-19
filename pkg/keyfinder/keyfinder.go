@@ -3,7 +3,6 @@ package keyfinder
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -72,13 +71,13 @@ func (kf *KeyFinder) GetKeyList(userNames []string) (keyList []types.AccessKeyMe
 }
 
 // CheckKeyAges compare AccessKeyMetadata.CreateDate to kf.Hours
-func (kf *KeyFinder) CheckKeyAges(allKeyList []types.AccessKeyMetadata) {
+func (kf *KeyFinder) CheckKeyAges(allKeyList []types.AccessKeyMetadata) (cnt int) {
 	var count int
 	for _, key := range allKeyList {
-		expireTime := time.Now().UTC().Add(time.Hour * time.Duration(-kf.Hours))
+		deadlineTime := key.CreateDate.Add(time.Hour * time.Duration(kf.Hours))
 
-		// If key expired then send message to Slack Webhook
-		if expireTime.Sub(*key.CreateDate) > 0 {
+		// if (Created time + N hours) < Current time, key expired
+		if deadlineTime.Before(time.Now().UTC()) {
 			count += 1
 			kf.PostSlackMessage(key)
 			fmt.Println("[RESULT] Sent Slack Message regarding IAM User using expired Access Key Pair : ", *key.UserName)
@@ -87,25 +86,14 @@ func (kf *KeyFinder) CheckKeyAges(allKeyList []types.AccessKeyMetadata) {
 	if count == 0 {
 		fmt.Println("[RESULT] There was no expired Access Keys.")
 	}
+	return count
 }
 
 // PostSlackMessage sends HTTP POST request to kf.URL
 func (kf *KeyFinder) PostSlackMessage(key types.AccessKeyMetadata) {
-	msg := fmt.Sprintf(`Access key expired!
-	IAM User : %s
-	Access Key ID : %s
-	Create Date : %s`, *key.UserName, *key.AccessKeyId, *key.CreateDate)
+	msg := slack.SetText(key, kf.SlackChannel)
 
-	message, err := json.Marshal(slack.SlackMessage{
-		Text:    msg,
-		Channel: kf.SlackChannel,
-	})
-	if err != nil {
-		fmt.Println("[ERROR] Failed to marshal slack message")
-		panic(err.Error())
-	}
-
-	req, err := http.NewRequest(http.MethodPost, kf.URL, bytes.NewBuffer(message))
+	req, err := http.NewRequest(http.MethodPost, kf.URL, bytes.NewBuffer(msg))
 	if err != nil {
 		fmt.Println("[ERROR] Failed to create http request")
 		panic(err.Error())

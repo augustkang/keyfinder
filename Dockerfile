@@ -5,7 +5,7 @@ ENV GO111MODULE=on \
     GOOS=linux \
     GOARCH=amd64
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates tzdata
 
 WORKDIR /build
 
@@ -20,6 +20,8 @@ WORKDIR /app
 FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 COPY --from=builder /build/main .
 
