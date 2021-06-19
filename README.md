@@ -47,29 +47,29 @@ Kubernetes로 배포할 경우 manifest 내에 넣어주어야 합니다.
 ## Run locally
 
 ```bash
-git clone https://github.com/augustkang/keyfinder
+[august@dummy-pc ~]$ git clone https://github.com/augustkang/keyfinder
 
-cd keyfinder
+[august@dummy-pc ~]$ cd keyfinder
 
-go build -o main ./
+[august@dummy-pc ~]$ go build -o main ./
 
-./main
+[august@dummy-pc ~]$ ./main
 
 # Or just run
-go run main.go
+[august@dummy-pc ~]$ go run main.go
 ```
 
 ## Run as Docker container
-```
+```bash
 
 # Pull from Docker hub
-docker pull donghyunkang/keyfinder:latest
+[august@dummy-pc ~]$ docker pull donghyunkang/keyfinder:latest
 
 # Build image locally
-docker build -t keyfinder:latest ./
+[august@dummy-pc ~]$ docker build -t keyfinder:latest ./
 
 # Docker run (with pulled image)
-docker run -e AWS_ACCESS_KEY_ID="YOUR-ACCESS-KEY" -e AWS_SECRET_ACCESS_KEY="YOUR-SECRET-KEY" -e AWS_REGION=ap-northeast-2 -d -p 8080:8080 --name keyfinder donghyunkang/keyfinder:latest
+[august@dummy-pc ~]$ docker run -e AWS_ACCESS_KEY_ID="YOUR-ACCESS-KEY" -e AWS_SECRET_ACCESS_KEY="YOUR-SECRET-KEY" -e AWS_REGION=ap-northeast-2 -d -p 8080:8080 --name keyfinder donghyunkang/keyfinder:latest
 ```
 
 ## Run on Kubernetes
@@ -77,8 +77,6 @@ docker run -e AWS_ACCESS_KEY_ID="YOUR-ACCESS-KEY" -e AWS_SECRET_ACCESS_KEY="YOUR
 ### Prerequisites
 
 Edit `keyfinder.yaml` to use AWS Access Key inside Container's `env` property.
-
-`vim keyfinder.yaml`
 
 ```yaml
 apiVersion: apps/v1
@@ -102,32 +100,39 @@ metadata:
 ...
 ```
 
-### How to deploy and expose keyfinder application as Kubernetes Service
+### Deploy keyfinder on Kubernetes
 
-- EKS create Deployment & create Service
+Please refer `keyfinder.yaml`. This manifest contains below Kubernetes objects
 
-I used `nodePort` 32000. You can edit this port number as per your requirements for sure.
+- Deployment : Deploys keyfinder pods.
+- Service : Exposes keyfinder deployment NodePort type.
+
+I used `nodePort` 32000. You can edit this port number as per your requirements.
+
+```bash
+[august@dummy-pc ~]$ kubectl apply -f keyfinder.yaml
+deployment.apps/keyfinder created
+service/keyfinder-service created
 
 ```
-kubectl apply -f keyfinder.yaml
-# Then send reuqest to IP:32000/?hours={hours}&url={WEBHOOK-URL}&channel={SLACK-CHANNEL-NAME} without '#' (For #mychannel channel? type mychannel only.)
-```
+
+Then send reuqest to nodeIP:32000/?hours={hours}&url={WEBHOOK-URL}&channel={SLACK-CHANNEL-NAME} without '#' (For #mychannel channel? type mychannel only.)
 
 Let's say hours (N) is 24, webhook url is http://abcdwebhook.com/asdf.
-And slack channel is #mychannel, for example.
+And slack channel name is #mychannel, for example.
 Your Worker node's IP is 1.1.1.1, and nodePort set as 32000.
 
-Then full URI (pass to keyfinder) as belows.
+Then full URI (pass to keyfinder) would
 
 - 1.1.1.1:32000/?hours=24&url=http://abcdwebhook.com/asdf&channel=mychannel
 
-# Minikube
+## Minikube
 
 You may need to edit keyfinder-service.
 
 After create deployment(or pod) and create service, Run below command to access service.
-```
-minikube service keyfinder
+```bash
+[august@dummy-pc ~]$ minikube service keyfinder
 ```
 
 ## Request to keyfinder
@@ -138,5 +143,5 @@ add channel parameter as query string to override Slack channel.
 (Default : example)
 
 ## TODO
-- Inject AWS Credential safely..?
-- Refactor
+- Inject AWS Credential safely
+- Refactoring

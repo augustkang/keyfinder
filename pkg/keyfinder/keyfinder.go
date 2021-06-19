@@ -1,4 +1,4 @@
-package pkg
+package keyfinder
 
 import (
 	"bytes"
@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
+
+	"augustkang.com/keyfinder/pkg/slack"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 )
@@ -21,30 +22,18 @@ type KeyFinder struct {
 	SlackChannel string
 }
 
-type SlackMessage struct {
-	Text    string `json:"text"`
-	Channel string `json:"channel"`
-}
-
-func NewKeyFinder(hours int, url string, channel string) (kf *KeyFinder) {
+// NewKeyFinder returns KeyFinder struct
+func NewKeyFinder(hours int, url string, client *iam.Client, channel string) (kf *KeyFinder) {
 	return &KeyFinder{
 		Hours:        hours,
 		URL:          url,
+		Client:       client,
 		SlackChannel: channel,
 	}
 }
 
-func (kf *KeyFinder) SetIAMClient() {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		fmt.Println("[ERROR] Failed to load config")
-		panic(err.Error())
-	}
-	kf.Client = iam.NewFromConfig(cfg)
-}
-
+// GetUserNames retrieves all IAM Users and return user names as a slice
 func (kf *KeyFinder) GetUserNames() (userNames []string) {
-
 	var names []string
 	paginator := iam.NewListUsersPaginator(kf.Client, &iam.ListUsersInput{
 		PathPrefix: aws.String("/"),
@@ -62,8 +51,8 @@ func (kf *KeyFinder) GetUserNames() (userNames []string) {
 	return names
 }
 
+// GetKeyList retrieves all Access Key Pairs with given IAM User's name, then return AccessKeyMetadata as a slice
 func (kf *KeyFinder) GetKeyList(userNames []string) (keyList []types.AccessKeyMetadata) {
-
 	var userKeyList []types.AccessKeyMetadata
 
 	for _, name := range userNames {
@@ -78,18 +67,17 @@ func (kf *KeyFinder) GetKeyList(userNames []string) (keyList []types.AccessKeyMe
 			}
 			userKeyList = append(userKeyList, output.AccessKeyMetadata...)
 		}
-
 	}
 	return userKeyList
 }
 
+// CheckKeyAges compare AccessKeyMetadata.CreateDate to kf.Hours
 func (kf *KeyFinder) CheckKeyAges(allKeyList []types.AccessKeyMetadata) {
-
 	var count int
 	for _, key := range allKeyList {
 		expireTime := time.Now().UTC().Add(time.Hour * time.Duration(-kf.Hours))
 
-		// If
+		// If key expired then send message to Slack Webhook
 		if expireTime.Sub(*key.CreateDate) > 0 {
 			count += 1
 			kf.PostSlackMessage(key)
@@ -101,18 +89,17 @@ func (kf *KeyFinder) CheckKeyAges(allKeyList []types.AccessKeyMetadata) {
 	}
 }
 
+// PostSlackMessage sends HTTP POST request to kf.URL
 func (kf *KeyFinder) PostSlackMessage(key types.AccessKeyMetadata) {
-
 	msg := fmt.Sprintf(`Access key expired!
 	IAM User : %s
 	Access Key ID : %s
 	Create Date : %s`, *key.UserName, *key.AccessKeyId, *key.CreateDate)
 
-	message, err := json.Marshal(SlackMessage{
+	message, err := json.Marshal(slack.SlackMessage{
 		Text:    msg,
 		Channel: kf.SlackChannel,
 	})
-
 	if err != nil {
 		fmt.Println("[ERROR] Failed to marshal slack message")
 		panic(err.Error())
