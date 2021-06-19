@@ -5,26 +5,23 @@ ENV GO111MODULE=on \
     GOOS=linux \
     GOARCH=amd64
 
-RUN apk add git
+RUN apk --no-cache add ca-certificates
 
-RUN mkdir /app
-
-ADD . /app
-
-WORKDIR /app
-
-COPY go.mod go.sum ./
-
-RUN go mod download
+WORKDIR /build
 
 COPY . .
 
+RUN go mod download
+
 RUN go build -o main .
 
-FROM alpine:latest
-WORKDIR /app/
+WORKDIR /app
 
-COPY --from=builder /app/main .
+FROM scratch
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+COPY --from=builder /build/main .
 
 EXPOSE 8080
 
