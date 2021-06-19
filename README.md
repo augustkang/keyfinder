@@ -14,9 +14,20 @@ keyfinder는 HTTP web server 기반으로 작동합니다. query string으로 ho
 
 - 예시 : 브라우저에서 localhost:8080/?url=https://dummyslackwebhook.com/asdf&hours=8 입력
 
-## Limitations
+## Prerequisites
 
-### Access Key Pair는 컨테이너에 환경변수로 직접 넣어주어야 합니다.
+### IAM Permissions
+
+keyfinder가 작동하려면 IAM action들을 허용해줘야 합니다.
+
+- iam:ListUsers
+- iam:ListAccessKeys
+
+### 실행하려면?
+
+직접 실행하려면 AWS Access Key Pair를 `aws configure` 명령어로 준비해두어야 합니다.
+
+또는 컨테이너로 실행한다면 Access Key Pair를 컨테이너에 환경변수로 넣어주어야 합니다.
 
 Docker로 실행할 경우 `docker run` 명령어에 `-e` 옵션을 넣고 넣어줄 수 있습니다.
 
@@ -34,10 +45,6 @@ Kubernetes로 배포할 경우 manifest 내에 넣어주어야 합니다.
 - localhost:8080/?channel=examplechannel&url=https://dummyslackwebhook.com/asdf&hours=8
 
 ## Run locally
-
-### Prerequisites
-
-You may need AWS credential with proper IAM Permissions to run keyfinder locally.
 
 ```bash
 git clone https://github.com/augustkang/keyfinder
@@ -122,9 +129,14 @@ After create deployment(or pod) and create service, Run below command to access 
 ```
 minikube service keyfinder
 ```
+
 ## Request to keyfinder
 
 nodeIP:nodePort/?url=URL&hours=N
 
 add channel parameter as query string to override Slack channel.
 (Default : example)
+
+## TODO
+- Inject AWS Credential safely..?
+- Refactor
