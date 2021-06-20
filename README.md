@@ -16,7 +16,7 @@ keyfinder는 HTTP web server 기반으로 작동합니다. query string으로 ho
 
 ### Query string으로 제공할 수 있는 Parameter의 종류
 - url(필수) : Slack webhook URL
-- hours(필수) : 지금으로부터 몇 시간보다 오래된 Access Key Pair 들을 찾을건지
+- hours(필수) : 생성된 후 몇 시간 지난 Access Key Pair 들을 찾을건지
 - channel(선택) : 해당 Slack workspace의 어느 Channel로 보낼 것인지. 기본값 : #example
 - - !!주의 : channel=name 형태로 넘겨줘야 합니다. channel=#name 형식 안됨!!
 
@@ -27,9 +27,6 @@ keyfinder는 HTTP web server 기반으로 작동합니다. query string으로 ho
 다른 채널로 override 하고 싶을 경우가 있을 수 있으므로 그럴 경우 query string parameter로 받게 하였습니다.
 
 !!주의 : channel 명이 예를 들어 '#examplechannel' 인 경우 'examplechannel' 이라고만 입력해야 해당 채널로 보냅니다.
-
-- '#examplechannel'로 보내는 예시
-- localhost:8080/?channel=examplechannel&url=https://dummyslackwebhook.com/asdf&hours=8
 
 ## Prerequisites
 
@@ -52,6 +49,8 @@ Kubernetes로 배포할 경우 manifest 내에 넣어주어야 합니다.
 
 ## Run locally
 
+If run on local, keyfinder will use port number **8080**
+
 ```bash
 [august@dummy-pc ~]$ git clone https://github.com/augustkang/keyfinder
 
@@ -65,10 +64,19 @@ Kubernetes로 배포할 경우 manifest 내에 넣어주어야 합니다.
 [august@dummy-pc ~]$ go run main.go
 ```
 
+**Then, open your browser and enter below address (localhost:8080) as belows**
+
+'localhost:8080/?hours=24&url=https://dummyslackwebhook.com/asdf&channel=examplechannel'
+
 ## Run as Docker container
+
+keyfinder needs IAM permission to run properly.
+
+Please pass aws credential as environment variable to keyfinder container.
+
 ```bash
 # Docker run(simple)
-[august@dummy-pc ~]$ docker run -e AWS_ACCESS_KEY_ID="YOUR-ACCESS-KEY" -e AWS_SECRET_ACCESS_KEY=  "YOUR-SECRET-KEY" -e AWS_REGION=ap-northeast-2 -d -p 8080:8080 --name keyfinder donghyunkang/key  finder:latest
+[august@dummy-pc ~]$ docker run -e AWS_ACCESS_KEY_ID="YOUR-ACCESS-KEY" -e AWS_SECRET_ACCESS_KEY="YOUR-SECRET-KEY" -e AWS_REGION=ap-northeast-2 -d -p 8080:8080 --name keyfinder donghyunkang/keyfinder:latest
 ```
 
 To build or pull image from Docker hub,
@@ -80,6 +88,8 @@ To build or pull image from Docker hub,
 # Pull from Docker hub
 [august@dummy-pc ~]$ docker pull donghyunkang/keyfinder:latest
 ```
+
+**Then, access 'localhost:8080/?hours=24&url=https://dummyslackwebhook.com/asdf&channel=examplechannel'**
 
 ## Run on Kubernetes
 
@@ -152,5 +162,4 @@ add channel parameter as query string to override Slack channel.
 (Default : example)
 
 ## TODO
-- Inject AWS Credential safely
-- Refactoring
+- Inject AWS Credential securely(Or retrieve from other source)
