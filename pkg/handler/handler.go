@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	DefaultChannel = "#example"
+	DefaultChannel = "example"
 )
 
 // RootHandler handles request to root(/)
@@ -44,7 +44,7 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 	keyList := kf.GetKeyList(keyNames)
 
 	if c := kf.CheckKeyAges(keyList); c > 0 {
-		fmt.Fprintf(w, "Found %d expired keys!\nPlease refer to Slack %s Channel for details!\n", c, channel)
+		fmt.Fprintf(w, "Found %d expired keys!\nPlease refer to Slack #%s Channel for details!\n", c, channel)
 	} else {
 		fmt.Fprintf(w, "No keys expired! :D\n")
 	}
