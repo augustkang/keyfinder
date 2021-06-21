@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  keyfinder:
+    image: donghyunkang/keyfinder:latest
+    environment:
+    - AWS_ACCESS_KEY_ID=YOUR-ACCESS-KEY-ID-HERE
+    - AWS_SECRET_ACCESS_KEY=YOUR-SECRET-ACCESS-KEY-HERE
+    - AWS_REGION=ap-northeast-2
+    ports:
+    - "8080:8080"

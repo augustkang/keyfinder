@@ -74,12 +74,41 @@ keyfinder needs IAM permission to run properly.
 
 Please pass aws credential as environment variable to keyfinder container.
 
+1. docker-compose
+
+edit docker-compose.yaml to use your own AWS Credential.
+
+```yaml
+version: '3'
+
+services:
+  keyfinder:
+    image: donghyunkang/keyfinder:latest
+    environment:
+    - AWS_ACCESS_KEY_ID= #PUT ACCESS KEY ID
+    - AWS_SECRET_ACCESS_KEY= #PUT SECRET ACCESS KEY
+    - AWS_REGION=ap-northeast-2
+    ports:
+    - "8080:8080"
+```
+
+Then run docker-compose
+
 ```bash
-# Docker run(simple)
+[august@dummy-pc ~]$ docker-compose up -d
+```
+
+2. docker run
+
+```bash
+# Docker run
 [august@dummy-pc ~]$ docker run -e AWS_ACCESS_KEY_ID="YOUR-ACCESS-KEY" -e AWS_SECRET_ACCESS_KEY="YOUR-SECRET-KEY" -e AWS_REGION=ap-northeast-2 -d -p 8080:8080 --name keyfinder donghyunkang/keyfinder:latest
 ```
 
-To build or pull image from Docker hub,
+**Then, access 'localhost:8080/?hours=24&url=https://dummyslackwebhook.com/asdf&channel=examplechannel'**
+
+
+### To build or pull image from Docker hub,
 
 ```bash
 # Build image locally
@@ -88,8 +117,6 @@ To build or pull image from Docker hub,
 # Pull from Docker hub
 [august@dummy-pc ~]$ docker pull donghyunkang/keyfinder:latest
 ```
-
-**Then, access 'localhost:8080/?hours=24&url=https://dummyslackwebhook.com/asdf&channel=examplechannel'**
 
 ## Run on Kubernetes
 
