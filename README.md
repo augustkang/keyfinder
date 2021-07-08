@@ -189,4 +189,5 @@ add channel parameter as query string to override Slack channel.
 (Default : example)
 
 ## TODO
+- Handle Slack API limit (API call throttling when bulk requests)
 - Inject AWS Credential securely(Or retrieve from other source)

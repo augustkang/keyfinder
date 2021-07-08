@@ -90,6 +90,10 @@ func (kf *KeyFinder) CheckKeyAges(allKeyList []types.AccessKeyMetadata) (cnt int
 }
 
 // PostSlackMessage sends HTTP POST request to kf.URL
+// TODO
+// This implementation will face Slack API rate limits if there exist tons of expired access keys
+// link : https://api.slack.com/docs/rate-limits
+// Need to group multiple Slack Messages to one grouped message to avoid API rate limit
 func (kf *KeyFinder) PostSlackMessage(key types.AccessKeyMetadata) {
 	msg := slack.SetText(key, kf.SlackChannel)
 
